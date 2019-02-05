@@ -76,11 +76,12 @@ class mfAreaUncertainity:
 
         result = solve(m1, m2, s1, s2)
         if len(result) == 0:  # Completely non-overlapping
-            overlap = 0.0
+            area = 0.0
+            return area
         if len(result) > 0:  # One point of contact
             r = result[0]
+            print(len(result))
 
-            # Calculating area using Cdf
             area = 1 - norm.cdf(r, m1, s1) + norm.cdf(r, m2, s2)
             return area
 
