@@ -29,9 +29,10 @@ import matplotlib.pyplot as plt
 import skfuzzy as fuzz
 from scipy.stats import norm
 from mfParameters import*
+from sympy import*
 
 dist1 = np.arange(0, 10, .01)
-#dist2 = np.arange(0, 11, .01)
+#dist2 = np.arange(0, 115, .01)
 
 # Define Intervals
 intervals = []
@@ -46,18 +47,21 @@ l = len(intervals)
 # Define Parameters
 param = parameters(intervals)
 intervalsMod = param.checkChange()
-
+for i in range(len(intervalsMod)):
+    print("intervalsMod[i]")
 paramMod = parameters(intervalsMod)
 triParam = paramMod.triParam()
-trapParam = param.trapParam()
-gaussParam = param.gaussParam()
-print("Test Gauss PAraam")
+trapParam = paramMod.trapParam()
+gaussParam = paramMod.gaussParam()
+print("Gaussian Parameters")
 print(gaussParam)
 
 plt.rcParams['axes.xmargin'] = 0
 plt.rcParams['axes.ymargin'] = 0
 
-fig, (ax0, ax1, ax2) = plt.subplots(nrows=3, figsize=(5, 7))
+fig1, ax0 = plt.subplots(nrows=1, figsize=(6, 6))
+fig1, ax1 = plt.subplots(nrows=1, figsize=(6, 6))
+fig1, ax2 = plt.subplots(nrows=1, figsize=(6, 6))
 ax0.spines['top'].set_visible(False)
 ax1.spines['top'].set_visible(False)
 ax2.spines['top'].set_visible(False)
@@ -66,21 +70,22 @@ triMFSet = []
 for i in range(l):
     print(triParam[i])
     triMFSet.append(fuzz.trimf(dist1, triParam[i]))
-    ax0.plot(dist1, triMFSet[i], 'g', linewidth = 1)
+    ax0.plot(dist1, triMFSet[i], 'k', linewidth = 1)
 
 # TRAPEZOIDAL MF'S
 trapMFSet = []
 for i in range(l):
     print(trapParam[i])
     trapMFSet.append(fuzz.trapmf(dist1, trapParam[i]))
-    ax1.plot(dist1, trapMFSet[i], 'r', linewidth = 1)
+    ax1.plot(dist1, trapMFSet[i], 'k', linewidth = 1)
+
 
 # GAUSSIAN MF'S
 gaussMFSet = []
 for i in range(l):
     print(gaussParam[i])
     gaussMFSet.append(fuzz.gaussmf(dist1, gaussParam[i][0], gaussParam[i][1]))
-    ax2.plot(dist1, gaussMFSet[i], 'b', linewidth = 1)
+    ax2.plot(dist1, gaussMFSet[i], 'k', linewidth = 1)
 
 # TRIANGULAR MF'S - UNCERTAINITY
 triUA = []
@@ -131,8 +136,6 @@ for i in range(l):
     if(i==0):
         trapCA.append(mfAC.trapmfAreaC(dist1, trapParam[0], trapParam[1], 0, trapUA[0]))
     elif(i==(l-1)):
-        #print("TEST 1 : {}".format(mfAC.trimfAreaC(dist1, triParam[l-1], triUA[i-1], 0)))
-        #print("TEST 2 : {}".format( mfAC.trimfAreaC(dist1, [5.0, 7.5, 10.0], 0.116, 0)))
         trapCA.append(mfAC.trapmfAreaC(dist1, trapParam[l-1], [0, 0, 0, 0], trapUA[i-1], 0))
     else:
         trapCA.append(mfAC.trapmfAreaC(dist1, trapParam[i], trapParam[i+1], trapUA[i-1], trapUA[i]))
@@ -160,11 +163,11 @@ gaussTotCA = 0
 print("\nGAUSSIAN - AREA OF CERTAINITY")
 for i in range(l):
     if(i==0):
-        gaussCA.append(mfAC.gaussmfAreaC(dist1, gaussParam[0], 0, gaussUA[0]))
+        gaussCA.append(mfAC.gaussmfAreaC(dist1, gaussParam[0], gaussParam[1], 0, gaussUA[0]))
     elif(i==(l-1)):
-        gaussCA.append(mfAC.gaussmfAreaC(dist1, gaussParam[l-1], gaussUA[i-1], 0))
+        gaussCA.append(mfAC.gaussmfAreaC(dist1, gaussParam[l-1], [0, 0], gaussUA[i-1], 0))
     else:
-        gaussCA.append(mfAC.gaussmfAreaC(dist1, gaussParam[i], gaussUA[i-1], gaussUA[i]))
+        gaussCA.append(mfAC.gaussmfAreaC(dist1, gaussParam[i], gaussParam[i+1], gaussUA[i-1], gaussUA[i]))
     print("AreaCA {} : {} ".format(i+1, gaussCA[i]))
     gaussTotCA = gaussTotCA + gaussCA[i]
 print("Total Certainity Area: {}".format(gaussTotCA))
