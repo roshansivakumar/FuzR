@@ -21,6 +21,7 @@ FuzR factor was calculated directly for this distribution as it is already in th
 
 TODO
 1. Analysis
+2. Research Scaling Factor
 """
 from mfArea import mfAreaCertainity as mfAC
 from mfArea import mfAreaUncertainity as mfAU
