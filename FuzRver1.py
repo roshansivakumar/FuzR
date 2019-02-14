@@ -22,6 +22,7 @@ FuzR factor was calculated directly for this distribution as it is already in th
 TODO
 1. The code needs to become more reconfigurable to take inputs as parameters and modify the code throughout
 using variables rather than manually calculating the values for a predefined distribution
+- represented in FuzRver2
 2. Analysis
 """
 from mfArea import mfAreaCertainity as mfAC
