@@ -1,5 +1,16 @@
 """
-Class that contains functions to obtain both the cetainity and uncertainity reigon
+Class that contains functions to obtain both the cetainty and uncertainty reigon
+
+NOTE
+- For the concept of FuzR using CDF or PDF to calculate the Areas will not work as the
+CDF and PDF are basically the integration of the probability density function which is
+a curve that represents the probability and not absolute value, between two limits.
+Hence in our case we need to integrate between points to get the area under the curve
+
+TODO
+1. Robust algorithm for calculating Uncertainty and Certainty area of Gaussian membership
+functions using Integration.
+
 """
 import numpy as np
 import warnings
@@ -98,10 +109,11 @@ class mfAreaUncertainity:
 
             print("POINT OF INTERSECTION")
             print(r)
-            """
-            Using CDF
+
+            # Using CDF
             area = norm.cdf(10, m1, s1) - norm.cdf(r, m1, s1) + norm.cdf(r, m2, s2) - norm.cdf(0, m2, s2)
-            """
+
+            # Using Integration from Scipy
             print("m2: {} , s2: {} , m1: {} , s1: {}".format(m2, s2, m1, s1))
             function1= lambda x: np.exp(-((x - m2**2.) / (2 * s2**2.)))
             function2= lambda x: np.exp(-((x - m1**2.) / (2 * s1**2.)))
@@ -159,8 +171,9 @@ class mfAreaCertainity:
         #print("Check mean and standard deviation")
         #print(m1)
         #print(s1)
+
+        # Using Cdf
         area = norm.cdf(10, m1, s1) - norm.cdf(0, m1, s1) - pUnA - nUnA
-        #area = 1 - pUnA - nUnA
         return area
 
     def trapmfAreaC(x, params1, params2, pUnA, nUnA):
