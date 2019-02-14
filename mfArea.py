@@ -5,6 +5,7 @@ import numpy as np
 import warnings
 from scipy.stats import norm
 import scipy.integrate as integrate
+from scipy.integrate import quad
 
 
 class mfAreaUncertainity:
@@ -74,16 +75,44 @@ class mfAreaUncertainity:
             c = m1**2 / (2*std1**2) - m2**2 / (2*std2**2) - np.log(std2/std1)
             return np.roots([a, b, c])
 
+        flag = 2
         result = solve(m1, m2, s1, s2)
         if len(result) == 0:  # Completely non-overlapping
             area = 0.0
             return area
         if len(result) > 0:  # One point of contact
-            r = result[0]
-            print(len(result))
+            for i in range(len(result)):
+                print("All Points of intersection")
+                print(result)
+                if result[i] < 0:
+                    result[i] = 10000
+                    flag = 0
+                elif np.min(result)<i:
+                    flag = 1
+            if flag == 0:
+                r = np.min(result)
+            elif flag == 1:
+                r = np.max(result)
+            else:
+                r = np.min(result)
 
-            area = 1 - norm.cdf(r, m1, s1) + norm.cdf(r, m2, s2)
-            return area
+            print("POINT OF INTERSECTION")
+            print(r)
+            """
+            Using CDF
+            area = norm.cdf(10, m1, s1) - norm.cdf(r, m1, s1) + norm.cdf(r, m2, s2) - norm.cdf(0, m2, s2)
+            """
+            print("m2: {} , s2: {} , m1: {} , s1: {}".format(m2, s2, m1, s1))
+            function1= lambda x: np.exp(-((x - m2**2.) / (2 * s2**2.)))
+            function2= lambda x: np.exp(-((x - m1**2.) / (2 * s1**2.)))
+            print("AREA INTEGRATE IN SCIPY")
+            result1, error1 = quad(function1, 0, r)
+            result2, error2 = quad(function2, r, 10)
+            print("Theta 1 - Result1 : {}".format(result1))
+            print("Theta 2 - Result2 : {}".format(result2))
+            print("Total Result : {} \n--------------------------".format(result2+result1))
+            area = result2 + result1
+        return area
 
     def trapmfAreaU(x, params1, params2):
         assert len(params1) == 4, 'a1,b1,c1,d1 parameter must have exactly four\
@@ -101,15 +130,15 @@ class mfAreaUncertainity:
 
 class mfAreaCertainity:
 
-    def trimfAreaC(x, params1, params2, pUnA, nUnA):
+    def trimfAreaC(x, params1,pUnA, nUnA):
         assert len(params1) == 3, 'abc parameter must have exactly three \
                                    elements.'
-        assert len(params2) == 3, 'fgh parameter must have exactly three \
-                                   elements.'
+        #assert len(params2) == 3, 'fgh parameter must have exactly three \
+        #                           elements.'
         a, b, c = np.r_[params1]     # Zero-indexing in Python
-        f, g, h = np.r_[params2]     # Zero-indexing in Python
+        #f, g, h = np.r_[params2]     # Zero-indexing in Python
         assert a <= b and b <= c, 'abc requires the three elements a <= b <= c.'
-        assert f <= g and g <= h, 'fgh requires the three elements a <= b <= c.'
+        #assert f <= g and g <= h, 'fgh requires the three elements a <= b <= c.'
         area = 0.5*(c-a) - pUnA - nUnA
         return area
 
@@ -121,11 +150,17 @@ class mfAreaCertainity:
         m1, s1 = np.r_[params1]     # Zero-indexing in Python
         m2, s2 = np.r_[params2]     # Zero-indexing in Python
 
-        if nUnA == 0:
-            area = norm.cdf(10, m1, s1) - pUnA
-        else:
-            area = 1 - pUnA - nUnA
-
+        #print("Check previous and next Uncertainity")
+        #print(pUnA)
+        #print(nUnA)
+        #print("Check cdf Values")
+        #print(norm.cdf(10, m1, s1))
+        #print(norm.cdf(0, m1, s1))
+        #print("Check mean and standard deviation")
+        #print(m1)
+        #print(s1)
+        area = norm.cdf(10, m1, s1) - norm.cdf(0, m1, s1) - pUnA - nUnA
+        #area = 1 - pUnA - nUnA
         return area
 
     def trapmfAreaC(x, params1, params2, pUnA, nUnA):
