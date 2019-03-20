@@ -15,11 +15,16 @@ functions using Integration.
 import numpy as np
 import warnings
 from scipy.stats import norm
-import scipy.integrate as integrate
-from scipy.integrate import quad
+import sympy
+from sympy.core.function import nfloat
+from scipy.optimize import fsolve
 
 
 class mfAreaUncertainity:
+    """
+    class that contains methods to calculate the area of unceratinty
+    of similar and adjacent triangualr, trapezoidal and gaussian membership functions
+    """
 
     def trimfAreaU(x, params1, params2):
 
@@ -71,7 +76,7 @@ class mfAreaUncertainity:
 
         return area
 
-    def gaussmfAreaU(x, params1, params2):
+    def gaussmfAreaU(x, params1, params2, prevInter):
         assert len(params1) == 2, 'sigma,c parameter must have exactly two \
                                    elements.'
         assert len(params2) == 2, 'sigma,c parameter must have exactly two \
@@ -93,38 +98,31 @@ class mfAreaUncertainity:
             return area
         if len(result) > 0:  # One point of contact
             for i in range(len(result)):
-                print("All Points of intersection")
-                print(result)
+                #print("All Points of intersection")
+                #print(result)
                 if result[i] < 0:
                     result[i] = 10000
                     flag = 0
-                elif np.min(result)<i:
-                    flag = 1
+            if np.min(result) > prevInter :
+                r = np.min(result)
+            else:
+                r = np.max(result)
             if flag == 0:
                 r = np.min(result)
-            elif flag == 1:
-                r = np.max(result)
-            else:
-                r = np.min(result)
 
-            print("POINT OF INTERSECTION")
-            print(r)
+            #print("POINT OF INTERSECTION")
+            #print(r)
 
-            # Using CDF
-            area = norm.cdf(10, m1, s1) - norm.cdf(r, m1, s1) + norm.cdf(r, m2, s2) - norm.cdf(0, m2, s2)
+        x = sympy.var("x")
+        func1 = sympy.exp(-(((x-params1[0])/params1[1])**2)/2)
+        func2 = sympy.exp(-(((x-params2[0])/params2[1])**2)/2)
+        int1 = sympy.integrate(func1, (x, r, 10))
+        int2 = sympy.integrate(func2, (x, 0, r))
+        area1 = nfloat(int1)
+        area2 = nfloat(int2)
+        areaTot = round(area1, 3) + round(area2, 3)
 
-            # Using Integration from Scipy
-            print("m2: {} , s2: {} , m1: {} , s1: {}".format(m2, s2, m1, s1))
-            function1= lambda x: np.exp(-((x - m2**2.) / (2 * s2**2.)))
-            function2= lambda x: np.exp(-((x - m1**2.) / (2 * s1**2.)))
-            print("AREA INTEGRATE IN SCIPY")
-            result1, error1 = quad(function1, 0, r)
-            result2, error2 = quad(function2, r, 10)
-            print("Theta 1 - Result1 : {}".format(result1))
-            print("Theta 2 - Result2 : {}".format(result2))
-            print("Total Result : {} \n--------------------------".format(result2+result1))
-            area = result2 + result1
-        return area
+        return round(areaTot, 3), r
 
     def trapmfAreaU(x, params1, params2):
         assert len(params1) == 4, 'a1,b1,c1,d1 parameter must have exactly four\
@@ -134,13 +132,22 @@ class mfAreaUncertainity:
         a1, b1, c1, d1 = np.r_[params1]
         a2, b2, c2, d2 = np.r_[params2]
 
-        py = (a2 - d1)/(c1 - d1 - b2 + a2)
-        # Area
-        area = py*(d1 - a2)/2
+        if(b2 < c1):
+            area = (c1 - b2 + d1 - a2)/2
+        elif(b2==c1):
+            area = (d1 - a2)/2
+        else:
+            py = (a2 - d1)/(c1 - d1 - b2 + a2)
+            area = py*(d1 - a2)/2
+
         return area
 
 
 class mfAreaCertainity:
+    """
+    class that contains methods to calculate the area of ceratinty
+    of triangualr, trapezoidal and gaussian membership functions
+    """
 
     def trimfAreaC(x, params1,pUnA, nUnA):
         assert len(params1) == 3, 'abc parameter must have exactly three \
@@ -162,19 +169,13 @@ class mfAreaCertainity:
         m1, s1 = np.r_[params1]     # Zero-indexing in Python
         m2, s2 = np.r_[params2]     # Zero-indexing in Python
 
-        #print("Check previous and next Uncertainity")
-        #print(pUnA)
-        #print(nUnA)
-        #print("Check cdf Values")
-        #print(norm.cdf(10, m1, s1))
-        #print(norm.cdf(0, m1, s1))
-        #print("Check mean and standard deviation")
-        #print(m1)
-        #print(s1)
+        x = sympy.var("x")
+        func1 = sympy.exp(-(((x-params1[0])/params1[1])**2)/2)
+        int1 = sympy.integrate(func1, (x, 0, 10))
+        area1 = nfloat(int1)
+        areaTot = round(area1, 3) - pUnA - nUnA
 
-        # Using Cdf
-        area = norm.cdf(10, m1, s1) - norm.cdf(0, m1, s1) - pUnA - nUnA
-        return area
+        return round(areaTot, 3)
 
     def trapmfAreaC(x, params1, params2, pUnA, nUnA):
         assert len(params1) == 4, 'a1,b1,c1,d1 parameter must have exactly four\
